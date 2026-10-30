@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Effects Editor</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ff0044;
+        }
+        
+        .font-expressive {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+
+        /* Translucent Glass Pill Labels */
+        .pill-label {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Custom Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        /* Slider Track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #ffffff;
+            border-radius: 9999px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #ffffff;
+            border-radius: 9999px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        /* Slider Thumb */
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 0 2px rgba(255,255,255,0.8);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            border: none;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+
+        input[type=range]::-moz-range-thumb:hover {
+            transform: scale(1.15);
+            background: #ffffff;
+        }
+
+        /* Custom Scrollbar for Controls Sidebar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Checkerboard pattern for transparent canvas preview */
+        .checkerboard-bg {
+            background-color: #2e000b;
+            background-image: 
+                linear-gradient(45deg, #3d000f 25%, transparent 25%), 
+                linear-gradient(-45deg, #3d000f 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #3d000f 75%), 
+                linear-gradient(-45deg, transparent 75%, #3d000f 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+    </style>
+</head>
+<body class="bg-[#ff0044] min-h-screen text-white flex items-center justify-center p-3 sm:p-6 select-none">
+
+    <!-- Main Container Frame matching the vibrant mockup -->
+    <div class="w-full max-w-7xl bg-[#ff0044] rounded-[2.5rem] p-4 sm:p-8 flex flex-col md:flex-row gap-6 min-h-[600px] md:h-[88vh] shadow-2xl relative">
+        
+        <!-- Sidebar Controls Container -->
+        <div class="w-full md:w-80 flex flex-col gap-5 shrink-0">
+            
+            <!-- Upload Button Container (Padded so scaling hover animations aren't cut off) -->
+            <div class="p-1 z-10">
+                <label for="image-upload" class="group relative flex items-center justify-center bg-gradient-to-r from-red-500/80 to-rose-400/90 hover:from-rose-400 hover:to-red-500 text-white font-expressive text-3xl px-8 py-3.5 rounded-3xl cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] border border-white/30 text-center active:scale-95">
+                    <span>Upload</span>
+                    <i class="fa-solid fa-cloud-arrow-up ml-3 text-2xl group-hover:bounce"></i>
+                    <input id="image-upload" type="file" accept="image/*" class="hidden" />
+                </label>
+            </div>
+
+            <!-- Scrollable Controls Sidebar with Accordion Categories -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                
+                <!-- Tabbed Category Navigation Header -->
+                <div class="grid grid-cols-5 gap-1 p-1 bg-black/20 backdrop-blur-md rounded-2xl border border-white/10 text-xs text-center font-expressive">
+                    <button type="button" class="tab-btn px-1 py-2 rounded-xl transition bg-white/20 text-white shadow-sm" data-tab="tab-transform">
+                        <i class="fa-solid fa-up-down-left-right block text-sm mb-0.5"></i>
+                        <span>Transform</span>
+                    </button>
+                    <button type="button" class="tab-btn px-1 py-2 rounded-xl transition text-white/70 hover:text-white hover:bg-white/10" data-tab="tab-tone">
+                        <i class="fa-solid fa-sliders block text-sm mb-0.5"></i>
+                        <span>Tone</span>
+                    </button>
+                    <button type="button" class="tab-btn px-1 py-2 rounded-xl transition text-white/70 hover:text-white hover:bg-white/10" data-tab="tab-artistic">
+                        <i class="fa-solid fa-palette block text-sm mb-0.5"></i>
+                        <span>Artistic</span>
+                    </button>
+                    <button type="button" class="tab-btn px-1 py-2 rounded-xl transition text-white/70 hover:text-white hover:bg-white/10" data-tab="tab-detail">
+                        <i class="fa-solid fa-wand-magic-sparkles block text-sm mb-0.5"></i>
+                        <span>Detail</span>
+                    </button>
+                    <button type="button" class="tab-btn px-1 py-2 rounded-xl transition text-white/70 hover:text-white hover:bg-white/10" data-tab="tab-animation">
+                        <i class="fa-solid fa-film block text-sm mb-0.5"></i>
+                        <span>Anim</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: Transform & Geometry -->
+                <div id="tab-transform" class="tab-content bg-white/10 rounded-2xl p-3 space-y-3 border border-white/15 backdrop-blur-sm">
+                    <!-- Size -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full">Size</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-size" min="10" max="200" value="100">
+                            <span id="val-size" class="text-xs font-mono w-10 text-right text-white/80">100%</span>
+                        </div>
+                    </div>
+                    <!-- Rotation -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full">Rotate</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-rotate" min="0" max="360" value="0">
+                            <span id="val-rotate" class="text-xs font-mono w-10 text-right text-white/80">0°</span>
+                        </div>
+                    </div>
+                    <!-- Pixelate -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Pixelate</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-pixelate" min="1" max="40" value="1">
+                            <span id="val-pixelate" class="text-xs font-mono w-10 text-right text-white/80">Off</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Tone & Color -->
+                <div id="tab-tone" class="tab-content bg-white/10 rounded-2xl p-3 space-y-3 border border-white/15 backdrop-blur-sm hidden">
+                    <!-- Brightness -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Brightness</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-brightness" min="0" max="200" value="100">
+                            <span id="val-brightness" class="text-xs font-mono w-10 text-right text-white/80">100%</span>
+                        </div>
+                    </div>
+                    <!-- Contrast -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full">Contrast</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-contrast" min="0" max="200" value="100">
+                            <span id="val-contrast" class="text-xs font-mono w-10 text-right text-white/80">100%</span>
+                        </div>
+                    </div>
+                    <!-- Saturation -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Saturation</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-saturate" min="0" max="300" value="100">
+                            <span id="val-saturate" class="text-xs font-mono w-10 text-right text-white/80">100%</span>
+                        </div>
+                    </div>
+                    <!-- Hue Rotate -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Hue Tint</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-hue" min="0" max="360" value="0">
+                            <span id="val-hue" class="text-xs font-mono w-10 text-right text-white/80">0°</span>
+                        </div>
+                    </div>
+                    <!-- Temperature -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Warmth</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-temp" min="-100" max="100" value="0">
+                            <span id="val-temp" class="text-xs font-mono w-10 text-right text-white/80">0</span>
+                        </div>
+                    </div>
+                    <!-- Sepia -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Sepia</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-sepia" min="0" max="100" value="0">
+                            <span id="val-sepia" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+                    <!-- Invert -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Invert</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-invert" min="0" max="100" value="0">
+                            <span id="val-invert" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+                    <!-- Threshold -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Threshold</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-threshold" min="0" max="255" value="0">
+                            <span id="val-threshold" class="text-xs font-mono w-10 text-right text-white/80">Off</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Artistic & Effects -->
+                <div id="tab-artistic" class="tab-content bg-white/10 rounded-2xl p-3 space-y-3 border border-white/15 backdrop-blur-sm hidden">
+                    
+                    <!-- Gradient Map Control Block -->
+                    <div class="p-2.5 bg-black/20 rounded-xl space-y-2 border border-white/10">
+                        <div class="flex items-center justify-between">
+                            <span class="pill-label font-expressive text-xs px-2.5 py-1 rounded-full text-white inline-block">Gradient Map</span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="color" id="grad-color-dark" value="#050515" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                <input type="color" id="grad-color-light" value="#ff0055" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                            </div>
+                        </div>
+                        <!-- Gradient Presets -->
+                        <div class="grid grid-cols-4 gap-1 pt-1">
+                            <button type="button" class="grad-preset text-[10px] font-expressive py-1 rounded bg-gradient-to-r from-cyan-900 to-pink-500 text-white" data-dark="#0d1b2a" data-light="#f72585">Cyber</button>
+                            <button type="button" class="grad-preset text-[10px] font-expressive py-1 rounded bg-gradient-to-r from-purple-900 to-amber-400 text-white" data-dark="#2b0938" data-light="#ffb703">Sunset</button>
+                            <button type="button" class="grad-preset text-[10px] font-expressive py-1 rounded bg-gradient-to-r from-emerald-950 to-teal-300 text-white" data-dark="#022c22" data-light="#6ee7b7">Mint</button>
+                            <button type="button" class="grad-preset text-[10px] font-expressive py-1 rounded bg-gradient-to-r from-black to-white text-white" data-dark="#000000" data-light="#ffffff">B&W</button>
+                        </div>
+                        <!-- Gradient Map Intensity -->
+                        <div class="flex items-center gap-2 pt-1">
+                            <span class="text-[11px] font-expressive text-white/80">Mix</span>
+                            <input type="range" id="slider-gradmap" min="0" max="100" value="0">
+                            <span id="val-gradmap" class="text-xs font-mono w-8 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- RGB Glitch Offset -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Glitch RGB</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-glitch" min="0" max="30" value="0">
+                            <span id="val-glitch" class="text-xs font-mono w-10 text-right text-white/80">0px</span>
+                        </div>
+                    </div>
+
+                    <!-- Stippling -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Stippling</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-stippling" min="0" max="100" value="0">
+                            <span id="val-stippling" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Vignette -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Vignette</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-vignette" min="0" max="100" value="0">
+                            <span id="val-vignette" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+
+                    <!-- Noise / Grain -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Grain</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-noise" min="0" max="100" value="0">
+                            <span id="val-noise" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Detail & Blur -->
+                <div id="tab-detail" class="tab-content bg-white/10 rounded-2xl p-3 space-y-3 border border-white/15 backdrop-blur-sm hidden">
+                    <!-- Blurriness -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Blurriness</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-blur" min="0" max="20" value="0" step="0.5">
+                            <span id="val-blur" class="text-xs font-mono w-10 text-right text-white/80">0px</span>
+                        </div>
+                    </div>
+                    <!-- Sharpness -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Sharpness</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-sharpness" min="0" max="100" value="0">
+                            <span id="val-sharpness" class="text-xs font-mono w-10 text-right text-white/80">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: Motion Animation Settings -->
+                <div id="tab-animation" class="tab-content bg-white/10 rounded-2xl p-3 space-y-3 border border-white/15 backdrop-blur-sm hidden">
+                    <!-- Animation Mode Selector -->
+                    <div class="space-y-1.5">
+                        <label class="font-expressive text-xs text-white/90">Animation Mode</label>
+                        <select id="anim-mode" class="w-full bg-black/30 text-white rounded-xl px-3 py-2 text-xs border border-white/20 font-expressive outline-none focus:border-white/50">
+                            <option value="none">None (Static Image)</option>
+                            <option value="pulse">Pulse Zoom Loop</option>
+                            <option value="hueCycle">Spectrum Hue Cycle</option>
+                            <option value="glitchJitter">Glitch Jitter Burst</option>
+                            <option value="floatShake">Floating Bob & Shake</option>
+                            <option value="scanlineSweep">Laser Scanline Sweep</option>
+                            <option value="rotateSpin">360° Continuous Spin</option>
+                            <option value="vibeShake">Bass Shake & Quake</option>
+                            <option value="strobeFlash">Strobe Brightness Flash</option>
+                            <option value="glitchRGBWave">RGB Shift Wave</option>
+                        </select>
+                    </div>
+
+                    <!-- Animation Waveform -->
+                    <div class="space-y-1.5">
+                        <label class="font-expressive text-xs text-white/90">Easing / Waveform</label>
+                        <select id="anim-wave" class="w-full bg-black/30 text-white rounded-xl px-3 py-2 text-xs border border-white/20 font-expressive outline-none focus:border-white/50">
+                            <option value="sine">Sine Wave (Smooth)</option>
+                            <option value="triangle">Triangle Wave (Linear)</option>
+                            <option value="sawtooth">Sawtooth (Ramp)</option>
+                            <option value="square">Square Wave (Step Flash)</option>
+                        </select>
+                    </div>
+
+                    <!-- Animation Speed -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Anim Speed</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-anim-speed" min="1" max="20" value="5">
+                            <span id="val-anim-speed" class="text-xs font-mono w-10 text-right text-white/80">5x</span>
+                        </div>
+                    </div>
+
+                    <!-- Animation Intensity / Amplitude -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Intensity</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-anim-intensity" min="10" max="100" value="50">
+                            <span id="val-anim-intensity" class="text-xs font-mono w-10 text-right text-white/80">50%</span>
+                        </div>
+                    </div>
+
+                    <!-- Motion Blur Simulation -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-24 text-center shrink-0">
+                            <span class="pill-label font-expressive text-sm px-3 py-1 rounded-full text-white inline-block w-full truncate">Motion Trail</span>
+                        </div>
+                        <div class="flex-1 flex items-center gap-2">
+                            <input type="range" id="slider-anim-trail" min="0" max="90" value="0">
+                            <span id="val-anim-trail" class="text-xs font-mono w-10 text-right text-white/80">Off</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Global Actions -->
+            <div class="pt-2 flex gap-2">
+                <button id="reset-btn" class="flex-1 py-2 bg-white/20 hover:bg-white/30 rounded-xl font-expressive text-sm text-white transition flex items-center justify-center gap-1.5 border border-white/20 shadow-sm active:scale-95">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+                <button id="download-btn" class="flex-1 py-2 bg-white text-[#ff0044] hover:bg-rose-100 rounded-xl font-expressive text-sm font-semibold transition flex items-center justify-center gap-1.5 shadow-md active:scale-95">
+                    <i class="fa-solid fa-download"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <!-- Preview Canvas Container matching mockup deep burgundy background -->
+        <div id="drop-zone" class="flex-1 bg-[#580015] rounded-[2.2rem] p-4 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-inner border border-red-900/40 min-h-[350px] transition-all">
+            
+            <!-- Dimensions Indicator Badge -->
+            <div id="image-dimensions" class="absolute top-4 right-4 z-10 hidden bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-mono text-white/80 border border-white/10">
+                0 x 0 px
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="empty-state" class="text-center text-white/50 space-y-4 max-w-sm px-4">
+                <div class="w-20 h-20 mx-auto rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                    <i class="fa-regular fa-image text-4xl text-white/40"></i>
+                </div>
+                <div>
+                    <h3 class="font-expressive text-xl text-white/90">No Image Loaded</h3>
+                    <p class="text-xs text-white/60 mt-1">Upload your photo or try our built-in sample demo image.</p>
+                </div>
+                <button id="sample-btn" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-medium border border-white/20 transition active:scale-95">
+                    Load Demo Sample
+                </button>
+            </div>
+
+            <!-- Processing Loader -->
+            <div id="loader" class="hidden absolute inset-0 bg-[#580015]/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-3">
+                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-white"></i>
+                <span class="font-expressive text-sm text-white/80">Processing Effects...</span>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative w-full h-full flex items-center justify-center overflow-auto custom-scrollbar p-2">
+                <canvas id="editor-canvas" class="max-w-full max-h-full rounded-2xl shadow-2xl transition-all duration-75 hidden checkerboard-bg"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-black/80 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl text-xs font-medium shadow-2xl border border-white/20 transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2 pointer-events-none">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">Notification</span>
+    </div>
+
+    <script>
+        // DOM Elements
+        const fileInput = document.getElementById('image-upload');
+        const dropZone = document.getElementById('drop-zone');
+        const canvas = document.getElementById('editor-canvas');
+        const ctx = canvas ? canvas.getContext('2d', { willReadFrequently: true }) : null;
+        const emptyState = document.getElementById('empty-state');
+        const loader = document.getElementById('loader');
+        const downloadBtn = document.getElementById('download-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const sampleBtn = document.getElementById('sample-btn');
+        const dimensionsBadge = document.getElementById('image-dimensions');
+
+        // Animation Controls
+        const animModeSelect = document.getElementById('anim-mode');
+        const animWaveSelect = document.getElementById('anim-wave');
+        const animSpeedSlider = document.getElementById('slider-anim-speed');
+        const animIntensitySlider = document.getElementById('slider-anim-intensity');
+        const animTrailSlider = document.getElementById('slider-anim-trail');
+        const valAnimSpeed = document.getElementById('val-anim-speed');
+        const valAnimIntensity = document.getElementById('val-anim-intensity');
+        const valAnimTrail = document.getElementById('val-anim-trail');
+
+        // Sliders
+        const sizeSlider = document.getElementById('slider-size');
+        const rotateSlider = document.getElementById('slider-rotate');
+        const contrastSlider = document.getElementById('slider-contrast');
+        const stipplingSlider = document.getElementById('slider-stippling');
+        const blurSlider = document.getElementById('slider-blur');
+        const brightnessSlider = document.getElementById('slider-brightness');
+        const saturateSlider = document.getElementById('slider-saturate');
+        const tempSlider = document.getElementById('slider-temp');
+        const invertSlider = document.getElementById('slider-invert');
+        const vignetteSlider = document.getElementById('slider-vignette');
+        const hueSlider = document.getElementById('slider-hue');
+        const sepiaSlider = document.getElementById('slider-sepia');
+        const pixelateSlider = document.getElementById('slider-pixelate');
+        const thresholdSlider = document.getElementById('slider-threshold');
+        const noiseSlider = document.getElementById('slider-noise');
+        const sharpnessSlider = document.getElementById('slider-sharpness');
+        const gradmapSlider = document.getElementById('slider-gradmap');
+        const glitchSlider = document.getElementById('slider-glitch');
+
+        // Color Pickers
+        const gradDarkPicker = document.getElementById('grad-color-dark');
+        const gradLightPicker = document.getElementById('grad-color-light');
+
+        // Value Displays
+        const valSize = document.getElementById('val-size');
+        const valRotate = document.getElementById('val-rotate');
+        const valContrast = document.getElementById('val-contrast');
+        const valStippling = document.getElementById('val-stippling');
+        const valBlur = document.getElementById('val-blur');
+        const valBrightness = document.getElementById('val-brightness');
+        const valSaturate = document.getElementById('val-saturate');
+        const valTemp = document.getElementById('val-temp');
+        const valInvert = document.getElementById('val-invert');
+        const valVignette = document.getElementById('val-vignette');
+        const valHue = document.getElementById('val-hue');
+        const valSepia = document.getElementById('val-sepia');
+        const valPixelate = document.getElementById('val-pixelate');
+        const valThreshold = document.getElementById('val-threshold');
+        const valNoise = document.getElementById('val-noise');
+        const valSharpness = document.getElementById('val-sharpness');
+        const valGradmap = document.getElementById('val-gradmap');
+        const valGlitch = document.getElementById('val-glitch');
+
+        // Application State
+        let loadedImage = null;
+        let renderTimeout = null;
+        let animFrameReq = null;
+        let animTime = 0;
+
+        // Dynamic Color Palette Extraction Engine
+        function extractAndApplyTheme(img) {
+            try {
+                const sampleCanvas = document.createElement('canvas');
+                const sCtx = sampleCanvas.getContext('2d');
+                sampleCanvas.width = 64;
+                sampleCanvas.height = 64;
+                sCtx.drawImage(img, 0, 0, 64, 64);
+                
+                const imgData = sCtx.getImageData(0, 0, 64, 64).data;
+                let colorBuckets = [];
+
+                for (let i = 0; i < imgData.length; i += 16) {
+                    const r = imgData[i];
+                    const g = imgData[i + 1];
+                    const b = imgData[i + 2];
+                    const a = imgData[i + 3];
+                    if (a < 128) continue;
+
+                    // Calculate saturation and brightness
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    const lum = (max + min) / 2;
+                    const sat = max === min ? 0 : (max - min) / (100 - Math.abs(2 * lum - 100));
+
+                    colorBuckets.push({ r, g, b, sat, lum });
+                }
+
+                if (colorBuckets.length === 0) return;
+
+                // Sort by highest saturation / vibrancy for primary tone
+                colorBuckets.sort((a, b) => b.sat - a.sat);
+                const primary = colorBuckets[0] || { r: 255, g: 0, b: 68 };
+                
+                // Sort by lowest luminance for deep dark background
+                colorBuckets.sort((a, b) => a.lum - b.lum);
+                const dark = colorBuckets[0] || { r: 88, g: 0, b: 21 };
+
+                const primaryHex = `rgb(${primary.r}, ${primary.g}, ${primary.b})`;
+                const darkHex = `rgb(${Math.round(dark.r * 0.4)}, ${Math.round(dark.g * 0.4)}, ${Math.round(dark.b * 0.4)})`;
+
+                // Update Body background and Preview zone seamlessly with smooth CSS transitions
+                document.body.style.transition = 'background-color 0.8s ease';
+                document.body.style.backgroundColor = primaryHex;
+
+                if (dropZone) {
+                    dropZone.style.transition = 'background-color 0.8s ease';
+                    dropZone.style.backgroundColor = darkHex;
+                }
+
+                // Update Save/Download Button text color to match primary theme
+                if (downloadBtn) {
+                    downloadBtn.style.color = primaryHex;
+                }
+            } catch (err) {
+                console.warn('Could not extract palette:', err);
+            }
+        }
+
+        // Setup Tab switching safely
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('bg-white/20', 'shadow-sm');
+                    b.classList.add('text-white/70');
+                });
+                btn.classList.add('bg-white/20', 'shadow-sm');
+                btn.classList.remove('text-white/70');
+
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                const activeTab = document.getElementById(targetTab);
+                if (activeTab) activeTab.classList.remove('hidden');
+            });
+        });
+
+        // Setup Animation Control Handlers
+        if (animModeSelect) {
+            animModeSelect.addEventListener('change', () => {
+                triggerRender();
+            });
+        }
+        if (animWaveSelect) {
+            animWaveSelect.addEventListener('change', () => {
+                triggerRender();
+            });
+        }
+        if (animSpeedSlider) {
+            animSpeedSlider.addEventListener('input', () => {
+                updateLabels();
+                triggerRender();
+            });
+        }
+        if (animIntensitySlider) {
+            animIntensitySlider.addEventListener('input', () => {
+                updateLabels();
+                triggerRender();
+            });
+        }
+        if (animTrailSlider) {
+            animTrailSlider.addEventListener('input', () => {
+                updateLabels();
+                triggerRender();
+            });
+        }
+
+        // Setup Gradient Presets
+        document.querySelectorAll('.grad-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const dark = btn.getAttribute('data-dark');
+                const light = btn.getAttribute('data-light');
+                if (gradDarkPicker) gradDarkPicker.value = dark;
+                if (gradLightPicker) gradLightPicker.value = light;
+                if (gradmapSlider && parseInt(gradmapSlider.value, 10) === 0) {
+                    gradmapSlider.value = 80;
+                }
+                updateLabels();
+                triggerRender();
+            });
+        });
+
+        if (gradDarkPicker) gradDarkPicker.addEventListener('input', triggerRender);
+        if (gradLightPicker) gradLightPicker.addEventListener('input', triggerRender);
+
+        // Initialize Slider Events
+        const allSliders = [
+            sizeSlider, rotateSlider, contrastSlider, stipplingSlider, blurSlider,
+            brightnessSlider, saturateSlider, tempSlider, invertSlider, vignetteSlider,
+            hueSlider, sepiaSlider, pixelateSlider, thresholdSlider,
+            noiseSlider, sharpnessSlider, gradmapSlider, glitchSlider
+        ].filter(Boolean);
+
+        allSliders.forEach(slider => {
+            slider.addEventListener('input', () => {
+                updateLabels();
+                triggerRender();
+            });
+        });
+
+        // Sync Labels with Values safely
+        function updateLabels() {
+            if (valSize && sizeSlider) valSize.textContent = `${sizeSlider.value}%`;
+            if (valRotate && rotateSlider) valRotate.textContent = `${rotateSlider.value}°`;
+            if (valContrast && contrastSlider) valContrast.textContent = `${contrastSlider.value}%`;
+            if (valStippling && stipplingSlider) valStippling.textContent = `${stipplingSlider.value}%`;
+            if (valBlur && blurSlider) valBlur.textContent = `${blurSlider.value}px`;
+            if (valBrightness && brightnessSlider) valBrightness.textContent = `${brightnessSlider.value}%`;
+            if (valSaturate && saturateSlider) valSaturate.textContent = `${saturateSlider.value}%`;
+            if (valTemp && tempSlider) valTemp.textContent = `${tempSlider.value}`;
+            if (valInvert && invertSlider) valInvert.textContent = `${invertSlider.value}%`;
+            if (valVignette && vignetteSlider) valVignette.textContent = `${vignetteSlider.value}%`;
+            if (valHue && hueSlider) valHue.textContent = `${hueSlider.value}°`;
+            if (valSepia && sepiaSlider) valSepia.textContent = `${sepiaSlider.value}%`;
+            if (valPixelate && pixelateSlider) valPixelate.textContent = pixelateSlider.value === '1' ? 'Off' : `${pixelateSlider.value}px`;
+            if (valThreshold && thresholdSlider) valThreshold.textContent = thresholdSlider.value === '0' ? 'Off' : `${thresholdSlider.value}`;
+            if (valNoise && noiseSlider) valNoise.textContent = `${noiseSlider.value}%`;
+            if (valSharpness && sharpnessSlider) valSharpness.textContent = `${sharpnessSlider.value}%`;
+            if (valGradmap && gradmapSlider) valGradmap.textContent = `${gradmapSlider.value}%`;
+            if (valGlitch && glitchSlider) valGlitch.textContent = `${glitchSlider.value}px`;
+            if (valAnimSpeed && animSpeedSlider) valAnimSpeed.textContent = `${animSpeedSlider.value}x`;
+            if (valAnimIntensity && animIntensitySlider) valAnimIntensity.textContent = `${animIntensitySlider.value}%`;
+            if (valAnimTrail && animTrailSlider) valAnimTrail.textContent = animTrailSlider.value === '0' ? 'Off' : `${animTrailSlider.value}%`;
+        }
+
+        // Waveform evaluation helper
+        function evaluateWaveform(type, phase) {
+            // Normalize phase into periodic [0, 1) range
+            const norm = ((phase % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2) / (Math.PI * 2);
+            switch (type) {
+                case 'triangle':
+                    return 1 - 4 * Math.abs(norm - 0.5);
+                case 'sawtooth':
+                    return norm * 2 - 1;
+                case 'square':
+                    return norm < 0.5 ? 1 : -1;
+                case 'sine':
+                default:
+                    return Math.sin(phase);
+            }
+        }
+
+        // Image Processing Pipeline
+        function applyEffects(t = 0) {
+            if (!loadedImage || !ctx || !canvas) return;
+
+            let scale = parseFloat(sizeSlider.value) / 100;
+            let rotationDeg = parseFloat(rotateSlider.value);
+            let brightness = parseFloat(brightnessSlider.value);
+            let contrast = parseFloat(contrastSlider.value);
+            let saturate = parseFloat(saturateSlider.value);
+            let stippleAmount = parseFloat(stipplingSlider.value);
+            let blurPx = parseFloat(blurSlider.value);
+            let invertVal = parseFloat(invertSlider.value);
+            let vignetteAmount = parseFloat(vignetteSlider.value);
+            let hueDeg = parseFloat(hueSlider.value);
+            let sepiaVal = parseFloat(sepiaSlider.value);
+            let pixelSize = parseInt(pixelateSlider.value, 10);
+            let thresholdVal = parseInt(thresholdSlider.value, 10);
+            let noiseAmount = parseFloat(noiseSlider.value);
+            let sharpnessAmount = parseFloat(sharpnessSlider.value);
+            let gradmapAmount = parseFloat(gradmapSlider.value);
+            let glitchAmount = parseFloat(glitchSlider.value);
+            let tempVal = parseFloat(tempSlider.value);
+
+            // Apply Animated Effects Overrides based on selected animation mode
+            const animMode = animModeSelect ? animModeSelect.value : 'none';
+            const waveType = animWaveSelect ? animWaveSelect.value : 'sine';
+            const intensity = (animIntensitySlider ? parseFloat(animIntensitySlider.value) : 50) / 100;
+            const waveVal = evaluateWaveform(waveType, t * 2);
+
+            let animTranslateX = 0;
+            let animTranslateY = 0;
+
+            if (animMode === 'pulse') {
+                scale *= (1 + waveVal * 0.25 * intensity);
+            } else if (animMode === 'hueCycle') {
+                hueDeg = (hueDeg + ((waveVal + 1) * 180 * intensity)) % 360;
+            } else if (animMode === 'glitchJitter') {
+                const thresholdTrigger = waveType === 'square' ? 0 : 0.2;
+                if (Math.abs(waveVal) > thresholdTrigger * (1 - intensity * 0.8)) {
+                    glitchAmount += Math.abs(waveVal) * 30 * intensity;
+                    animTranslateX = waveVal * 16 * intensity;
+                }
+            } else if (animMode === 'floatShake') {
+                const waveY = evaluateWaveform(waveType, t * 2.8);
+                animTranslateX = waveVal * 25 * intensity;
+                animTranslateY = waveY * 25 * intensity;
+            } else if (animMode === 'rotateSpin') {
+                if (waveType === 'sawtooth') {
+                    rotationDeg = (rotationDeg + (((waveVal + 1) / 2) * 360 * intensity)) % 360;
+                } else {
+                    rotationDeg = (rotationDeg + (waveVal * 180 * intensity)) % 360;
+                }
+            } else if (animMode === 'vibeShake') {
+                const kick = waveVal > 0 ? waveVal : 0;
+                scale *= (1 + kick * 0.2 * intensity);
+                animTranslateX = kick * (Math.random() - 0.5) * 15 * intensity;
+                animTranslateY = kick * (Math.random() - 0.5) * 15 * intensity;
+            } else if (animMode === 'strobeFlash') {
+                brightness = Math.min(200, Math.max(0, brightness + waveVal * 100 * intensity));
+            } else if (animMode === 'glitchRGBWave') {
+                glitchAmount += Math.abs(waveVal) * 35 * intensity;
+            }
+
+            // Calculate bounding size considering rotation
+            const baseW = loadedImage.width * scale;
+            const baseH = loadedImage.height * scale;
+            const rad = (rotationDeg * Math.PI) / 180;
+            const sin = Math.abs(Math.sin(rad));
+            const cos = Math.abs(Math.cos(rad));
+            
+            const targetWidth = Math.max(1, Math.round(baseW * cos + baseH * sin));
+            const targetHeight = Math.max(1, Math.round(baseW * sin + baseH * cos));
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            if (dimensionsBadge) dimensionsBadge.textContent = `${targetWidth} x ${targetHeight} px`;
+
+            ctx.save();
+
+            // Handle Motion Trail clearing alpha
+            const trailVal = animTrailSlider ? parseFloat(animTrailSlider.value) : 0;
+            if (animMode !== 'none' && trailVal > 0) {
+                ctx.fillStyle = `rgba(88, 0, 21, ${1 - (trailVal / 100)})`;
+                ctx.fillRect(0, 0, targetWidth, targetHeight);
+            } else {
+                ctx.clearRect(0, 0, targetWidth, targetHeight);
+            }
+
+            // Center origin for rotation and offset transforms
+            ctx.translate(targetWidth / 2 + animTranslateX, targetHeight / 2 + animTranslateY);
+            ctx.rotate(rad);
+
+            // Pixelate pass
+            if (pixelSize > 1) {
+                const offWidth = Math.max(1, Math.floor(baseW / pixelSize));
+                const offHeight = Math.max(1, Math.floor(baseH / pixelSize));
+
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = offWidth;
+                offCanvas.height = offHeight;
+                const offCtx = offCanvas.getContext('2d');
+
+                offCtx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) invert(${invertVal}%) hue-rotate(${hueDeg}deg) sepia(${sepiaVal}%) blur(${blurPx * scale}px)`;
+                offCtx.drawImage(loadedImage, 0, 0, offWidth, offHeight);
+
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(offCanvas, 0, 0, offWidth, offHeight, -baseW / 2, -baseH / 2, baseW, baseH);
+            } else {
+                ctx.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%) invert(${invertVal}%) hue-rotate(${hueDeg}deg) sepia(${sepiaVal}%) blur(${blurPx * scale}px)`;
+                ctx.drawImage(loadedImage, -baseW / 2, -baseH / 2, baseW, baseH);
+            }
+            ctx.restore();
+
+            // Direct pixel manipulations
+            if (sharpnessAmount > 0 || thresholdVal > 0 || noiseAmount > 0 || tempVal !== 0 || gradmapAmount > 0 || glitchAmount > 0) {
+                applyPixelManipulations(targetWidth, targetHeight, sharpnessAmount, thresholdVal, noiseAmount, tempVal, gradmapAmount, glitchAmount);
+            }
+
+            // Stippling / Halftone Dot Dithering
+            if (stippleAmount > 0) {
+                applyStippleEffect(targetWidth, targetHeight, stippleAmount);
+            }
+
+            // Animated Scanline Sweep
+            if (animMode === 'scanlineSweep') {
+                const sweepPos = ((waveVal + 1) / 2) * targetHeight;
+                ctx.save();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.fillRect(0, sweepPos, targetWidth, Math.max(2, 6 * intensity));
+                ctx.restore();
+            }
+
+            // Vignette Shadow
+            if (vignetteAmount > 0) {
+                applyVignetteEffect(targetWidth, targetHeight, vignetteAmount);
+            }
+        }
+
+        // Direct Pixel Manipulations
+        function applyPixelManipulations(width, height, sharpness, threshold, noise, temp, gradmap, glitch) {
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            // RGB Glitch Offset
+            if (glitch > 0) {
+                const copy = new Uint8ClampedArray(data);
+                const shift = Math.round(glitch);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const idx = (y * width + x) * 4;
+                        const redX = Math.min(width - 1, x + shift);
+                        const redIdx = (y * width + redX) * 4;
+                        data[idx] = copy[redIdx]; // Shift Red channel
+                    }
+                }
+            }
+
+            // Sharpness (Unsharp mask convolution kernel)
+            if (sharpness > 0) {
+                const amount = (sharpness / 100) * 1.5;
+                const copy = new Uint8ClampedArray(data);
+                const w = width;
+
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        const idx = (y * w + x) * 4;
+                        for (let c = 0; c < 3; c++) {
+                            const center = copy[idx + c];
+                            const neighbors = 
+                                copy[((y - 1) * w + x) * 4 + c] +
+                                copy[((y + 1) * w + x) * 4 + c] +
+                                copy[(y * w + (x - 1)) * 4 + c] +
+                                copy[(y * w + (x + 1)) * 4 + c];
+                            data[idx + c] = Math.min(255, Math.max(0, center + (center * 4 - neighbors) * amount * 0.25));
+                        }
+                    }
+                }
+            }
+
+            const darkRgb = hexToRgb(gradDarkPicker ? gradDarkPicker.value : '#000000');
+            const lightRgb = hexToRgb(gradLightPicker ? gradLightPicker.value : '#ffffff');
+            const gradMix = gradmap / 100;
+
+            // Per-pixel color filters
+            for (let i = 0; i < data.length; i += 4) {
+                let r = data[i];
+                let g = data[i + 1];
+                let b = data[i + 2];
+
+                // Temperature shift
+                if (temp !== 0) {
+                    r = Math.min(255, Math.max(0, r + temp * 0.8));
+                    b = Math.min(255, Math.max(0, b - temp * 0.8));
+                }
+
+                // Gradient Map mapping based on luminance
+                if (gradMix > 0) {
+                    const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    const targetR = darkRgb[0] + lum * (lightRgb[0] - darkRgb[0]);
+                    const targetG = darkRgb[1] + lum * (lightRgb[1] - darkRgb[1]);
+                    const targetB = darkRgb[2] + lum * (lightRgb[2] - darkRgb[2]);
+
+                    r = r * (1 - gradMix) + targetR * gradMix;
+                    g = g * (1 - gradMix) + targetG * gradMix;
+                    b = b * (1 - gradMix) + targetB * gradMix;
+                }
+
+                // Binary Threshold
+                if (threshold > 0) {
+                    const avg = (r + g + b) / 3;
+                    const val = avg >= threshold ? 255 : 0;
+                    r = val;
+                    g = val;
+                    b = val;
+                }
+
+                // Noise Grain
+                if (noise > 0) {
+                    const noiseVal = (Math.random() - 0.5) * (noise * 2.55);
+                    r = Math.min(255, Math.max(0, r + noiseVal));
+                    g = Math.min(255, Math.max(0, g + noiseVal));
+                    b = Math.min(255, Math.max(0, b + noiseVal));
+                }
+
+                data[i] = r;
+                data[i + 1] = g;
+                data[i + 2] = b;
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+        }
+
+        // Stippling Dot Halftone Filter
+        function applyStippleEffect(width, height, intensity) {
+            const imgData = ctx.getImageData(0, 0, width, height);
+            const data = imgData.data;
+
+            const dotGridSize = Math.max(3, Math.floor(12 - (intensity / 100) * 8));
+
+            const stippleCanvas = document.createElement('canvas');
+            stippleCanvas.width = width;
+            stippleCanvas.height = height;
+            const sCtx = stippleCanvas.getContext('2d');
+            sCtx.fillStyle = '#000000';
+
+            for (let y = 0; y < height; y += dotGridSize) {
+                for (let x = 0; x < width; x += dotGridSize) {
+                    const pixelIdx = (y * width + x) * 4;
+                    const r = data[pixelIdx];
+                    const g = data[pixelIdx + 1];
+                    const b = data[pixelIdx + 2];
+                    const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+                    const radius = (1 - brightness) * (dotGridSize / 1.8) * (intensity / 100);
+
+                    if (radius > 0.4) {
+                        sCtx.beginPath();
+                        sCtx.arc(x + dotGridSize / 2, y + dotGridSize / 2, radius, 0, Math.PI * 2);
+                        sCtx.fill();
+                    }
+                }
+            }
+
+            // Draw stipple dots overlay onto main canvas
+            ctx.drawImage(stippleCanvas, 0, 0);
+        }
+
+        // Vignette Shadow Effect
+        function applyVignetteEffect(width, height, intensity) {
+            const gradient = ctx.createRadialGradient(
+                width / 2, height / 2, Math.min(width, height) * 0.3,
+                width / 2, height / 2, Math.max(width, height) * 0.7
+            );
+            gradient.addColorStop(0, 'rgba(0,0,0,0)');
+            gradient.addColorStop(1, `rgba(0,0,0,${(intensity / 100) * 0.85})`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        // Color conversion utility
+        function hexToRgb(hex) {
+            let c = hex.replace('#', '');
+            if (c.length === 3) {
+                c = c.split('').map(x => x + x).join('');
+            }
+            const num = parseInt(c, 16);
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        }
+
+        // Helper to schedule image rendering and animation loops
+        function triggerRender() {
+            if (!loadedImage) return;
+
+            const animMode = animModeSelect ? animModeSelect.value : 'none';
+            if (animMode !== 'none') {
+                if (!animFrameReq) {
+                    const speed = animSpeedSlider ? parseFloat(animSpeedSlider.value) : 5;
+                    const loop = () => {
+                        animTime += 0.02 * (speed / 5);
+                        applyEffects(animTime);
+                        animFrameReq = requestAnimationFrame(loop);
+                    };
+                    animFrameReq = requestAnimationFrame(loop);
+                }
+            } else {
+                if (animFrameReq) {
+                    cancelAnimationFrame(animFrameReq);
+                    animFrameReq = null;
+                }
+                if (renderTimeout) clearTimeout(renderTimeout);
+                renderTimeout = setTimeout(() => {
+                    applyEffects(0);
+                }, 10);
+            }
+        }
+
+        // Handle Image Upload
+        function processFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showToast('Please select a valid image file', 'warning');
+                return;
+            }
+
+            showLoader(true);
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    loadedImage = img;
+                    if (emptyState) emptyState.classList.add('hidden');
+                    if (canvas) canvas.classList.remove('hidden');
+                    if (dimensionsBadge) dimensionsBadge.classList.remove('hidden');
+                    
+                    extractAndApplyTheme(img);
+                    resetControlsToDefault();
+                    applyEffects(0);
+                    showLoader(false);
+                    showToast('Image uploaded & theme updated!', 'success');
+                };
+                img.onerror = () => {
+                    showLoader(false);
+                    showToast('Failed to load image', 'warning');
+                };
+                img.src = event.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        // Setup Drag and Drop
+        if (dropZone) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.add('border-white', 'scale-[0.99]');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => {
+                    dropZone.classList.remove('border-white', 'scale-[0.99]');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files && files.length > 0) {
+                    processFile(files[0]);
+                }
+            }, false);
+        }
+
+        // Load Sample Image
+        function loadSampleImage() {
+            showLoader(true);
+            const sampleCanvas = document.createElement('canvas');
+            sampleCanvas.width = 800;
+            sampleCanvas.height = 600;
+            const sCtx = sampleCanvas.getContext('2d');
+
+            // Draw abstract gradient art sample
+            const grad = sCtx.createLinearGradient(0, 0, 800, 600);
+            grad.addColorStop(0, '#ff0055');
+            grad.addColorStop(0.5, '#7a00ff');
+            grad.addColorStop(1, '#00e5ff');
+            sCtx.fillStyle = grad;
+            sCtx.fillRect(0, 0, 800, 600);
+
+            // Draw shapes
+            sCtx.fillStyle = '#ffffff';
+            sCtx.beginPath();
+            sCtx.arc(400, 300, 140, 0, Math.PI * 2);
+            sCtx.fill();
+
+            sCtx.fillStyle = '#ffcc00';
+            sCtx.beginPath();
+            sCtx.arc(280, 220, 60, 0, Math.PI * 2);
+            sCtx.fill();
+
+            sCtx.fillStyle = '#111111';
+            sCtx.font = '700 48px Inter, sans-serif';
+            sCtx.textAlign = 'center';
+            sCtx.fillText('SAMPLE ART', 400, 315);
+
+            const img = new Image();
+            img.onload = () => {
+                loadedImage = img;
+                if (emptyState) emptyState.classList.add('hidden');
+                if (canvas) canvas.classList.remove('hidden');
+                if (dimensionsBadge) dimensionsBadge.classList.remove('hidden');
+                
+                extractAndApplyTheme(img);
+                resetControlsToDefault();
+                applyEffects();
+                showLoader(false);
+                showToast('Sample image loaded!', 'info');
+            };
+            img.src = sampleCanvas.toDataURL();
+        }
+
+        // Reset Controls to Default
+        function resetControlsToDefault() {
+            if (animFrameReq) {
+                cancelAnimationFrame(animFrameReq);
+                animFrameReq = null;
+            }
+            if (animModeSelect) animModeSelect.value = 'none';
+            if (animWaveSelect) animWaveSelect.value = 'sine';
+            if (animSpeedSlider) animSpeedSlider.value = 5;
+            if (animIntensitySlider) animIntensitySlider.value = 50;
+            if (animTrailSlider) animTrailSlider.value = 0;
+            if (contrastSlider) contrastSlider.value = 100;
+            if (stipplingSlider) stipplingSlider.value = 0;
+            if (blurSlider) blurSlider.value = 0;
+            if (brightnessSlider) brightnessSlider.value = 100;
+            if (saturateSlider) saturateSlider.value = 100;
+            if (tempSlider) tempSlider.value = 0;
+            if (invertSlider) invertSlider.value = 0;
+            if (vignetteSlider) vignetteSlider.value = 0;
+            if (hueSlider) hueSlider.value = 0;
+            if (sepiaSlider) sepiaSlider.value = 0;
+            if (pixelateSlider) pixelateSlider.value = 1;
+            if (thresholdSlider) thresholdSlider.value = 0;
+            if (noiseSlider) noiseSlider.value = 0;
+            if (sharpnessSlider) sharpnessSlider.value = 0;
+            if (gradmapSlider) gradmapSlider.value = 0;
+            if (glitchSlider) glitchSlider.value = 0;
+            if (gradDarkPicker) gradDarkPicker.value = '#050515';
+            if (gradLightPicker) gradLightPicker.value = '#ff0055';
+            updateLabels();
+        }
+
+        // Reset Event
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                if (!loadedImage) return;
+                resetControlsToDefault();
+                applyEffects();
+                showToast('Effects reset to defaults', 'info');
+            });
+        }
+
+        // Download Image Event
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                if (!loadedImage) {
+                    showToast('Upload an image first', 'warning');
+                    return;
+                }
+
+                const link = document.createElement('a');
+                link.download = 'edited-image.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast('Image downloaded!', 'success');
+            });
+        }
+
+        // Event listeners for uploads
+        if (fileInput) {
+            fileInput.addEventListener('change', handleImageUpload);
+            // Clear value on click so re-uploading the same file always fires change event
+            fileInput.addEventListener('click', (e) => {
+                e.target.value = null;
+            });
+        }
+        if (sampleBtn) sampleBtn.addEventListener('click', loadSampleImage);
+
+        // Helper UI Feedback
+        function showLoader(show) {
+            if (!loader) return;
+            if (show) {
+                loader.classList.remove('hidden');
+            } else {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            if (!toast || !toastMsg || !toastIcon) return;
+
+            toastMsg.textContent = message;
+
+            if (type === 'success') {
+                toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
+            } else if (type === 'warning') {
+                toastIcon.className = 'fa-solid fa-triangle-exclamation text-amber-400';
+            } else {
+                toastIcon.className = 'fa-solid fa-circle-info text-sky-400';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
